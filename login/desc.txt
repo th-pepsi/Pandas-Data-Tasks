@@ -1,0 +1,33 @@
+1. Background:
+Develop UX feature to encourage Chinese customers via update demonstration with what’s new and let customers better understand how ease of BMW update will be. EASY GUIDANCE for What Customer See Is What Customer Get.
+2. Use Case:
+US1:
+US2:
+3. HMI version
+ID8 MGU21/ ID8 MGU22
+4. Release date
+2022/07/22
+2024/07 with video play feature (supported by backend download)
+5. Launch Market: China
+6. Requirement:
+1)
+Main UI:
+3 buttons: play, install now, what's new; End user can push the button and get relevant functions;
+1 still video shows in a window;
+2) Play the video in full screen:
+full screen play
+After the video ends its play, it will return to the main UI no matter what previous status is;
+End user can playback it with the relevant button.
+enduser stop the full screen play
+3) Notification center:
+banner: when something new comes, it will show as a banner and disappear in 5 s.
+notification list: new message will be shown in the notification list
+when the end user touch either the banner or the item in notification list, it'll play the video in full screen.
+4)
+Speech/IPA Readiness (no included in MVP P1)
+trigger from IPA widget or speech to enter into the RSU OAP-APP
+depend on the IPA/Speech module
+5) HMI .Multi-language
+7. Mock-Up:
+8. Dependency: Speech function
+9. Others：N/A

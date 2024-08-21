@@ -1,61 +1,87 @@
 #!/usr/bin/ python3
 # -*- coding: utf-8 -*-
+import json
+from time import sleep
+
 import requests
+from bs4 import BeautifulSoup
 
-"""
-info:
-author:CriseLYJ
-github:https://github.com/CriseLYJ/
-update_time:2019-04-06
-"""
 
-"""
-模拟登陆招聘狗
-"""
+class ATCLogin(object):
 
-class ZhaoPinGouLogin(object):
+    def __init__(self, account, password, jiraUrl):
+        self.account = account
+        self.password = password
+        self.jiraUrl = jiraUrl
 
-    def __init__(self, account, password):
-        self.url = "https://qiye.zhaopingou.com/zhaopingou_interface/security_login?timestamp=1554552162122"
-        self.headers = {
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36",
-            "Refer": "https://qiye.zhaopingou.com/signin?callback=https%3A%2F%2Fqiye.zhaopingou.com%2Fresume",
-            "Host": "qiye.zhaopingou.com"
+        self.login_data = {
+            "os_username": self.account,
+            "os_password": self.password,
+            "os_destination": '/browse/ATLANTIS-1',
+            "user_role": '',
+            'atl_token': '',
+            'login': 'Log In'
         }
-        self.data = {
-            'userName': account,
-            'password': password,
-            'code': '',
-            'clientNo': '',
-            'userToken': '',
-            'clientType': '2'
+
+        self.session = requests.session()
+        self.session.headers = {
+            'accept-encoding': 'gzip, deflate, br, zstd',
+            'Referer': self.jiraUrl,
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+                          '(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36'
         }
-        self.session = requests.Session()
 
-    def get_coolie(self):
-        """模拟登陆获取cookie"""
-        resp = self.session.post(
-            url=self.url,
-            headers=self.headers,
-            data=self.data
-        )
-        resp_dict = resp.json()
+    '''
+        1.校验是否已经登陆
+        2.没登陆去登陆
+        3.登陆直接去jira单拿到desc内容
+    '''
+    def login(self):
+        if self.check_login():
+            print('已经有cookie了')
+            return True
 
-        if resp_dict["errorCode"] == 1:
-            print("登陆成功")
-            # 获取登陆过的cookies
-            cookies = resp.cookies
-            print(cookies)
-            return cookies
-        else:
-            print("登陆失败")
+        print('没有cookie，需要重新登陆')
 
-    def run(self):
-        self.get_coolie()
+        login_api = 'https://atc.bmwgroup.net/jira/login.jsp'
+        headers = self.session.headers
+        self.session.post(login_api, data=self.login_data, headers=headers)
+        sleep(1)
 
+        if self.check_login():
+            print('登录成功')
+            return True
+        print('登录失败')
+        return False
+
+    def check_login(self):
+        resp = self.session.get(self.jiraUrl, allow_redirects=False)
+        if resp.status_code == 200:
+            print(self.session.cookies)
+            return True
+        return False
+
+    def getDescCtx(self):
+        resp = self.session.get(self.jiraUrl)
+        soup = BeautifulSoup(resp.text, 'html.parser')
+        # 查找所有class为user-content-block的div元素
+        blocks = soup.find_all('div', class_='user-content-block')
+
+        # 遍历匹配的div元素，写入文件
+        with open('desc.txt', 'w') as f:
+            for block in blocks:
+                text_lines = block.get_text(separator='\n', strip=True).split('\n')
+                for line in text_lines:
+                    f.write(line + '\n')
 
 if __name__ == '__main__':
     account = input("请输入你的账号：")
     password = input("请输入你的密码：")
-    spider = ZhaoPinGouLogin(account, password)
-    spider.run()
+    jiraURL = input("输入你想进入的jira链接：")
+    atc = ATCLogin(account, password, jiraURL)
+
+
+    res = atc.login()
+    if res:
+        atc.getDescCtx()

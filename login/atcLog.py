@@ -1,7 +1,6 @@
 from getpass import getpass
 from time import sleep
-import requests
-from bs4 import BeautifulSoup
+import urllib.request
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -31,14 +30,25 @@ class AtcLogin(object):
         username.send_keys(self.account)
         sleep(1)
         password.send_keys(self.password)
-
-        subBtn = self.wait.until(EC.element_to_be_clickable((By.ID, 'login-form-submit')))
-        subBtn.click()
+        self.wait.until(EC.element_to_be_clickable((By.ID, 'login-form-submit'))).click()
+        sleep(1)
 
         try:
-            self.browser.get(self.jiraurl)
-            desText = self.wait.until(EC.element_to_be_clickable((By.ID, 'description-val')))
-            print(desText.text)
+            cookie = [item["name"] + "=" + item["value"] for item in self.browser.get_cookies()]
+            cookiestr = ';'.join(item for item in cookie)
+
+            print(cookiestr)
+            headers = {'cookie': cookiestr}
+            req = urllib.request.Request(self.jiraurl, headers=headers)
+
+            with urllib.request.urlopen(req) as response:
+                html = response.read()
+                print(html)
+
+
+            # self.browser.get(self.jiraurl)
+            # desText = self.wait.until(EC.element_to_be_clickable((By.ID, 'description-val')))
+            # print(desText.text)
 
         except Exception as e:
             print(e)
